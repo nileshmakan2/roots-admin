@@ -30,7 +30,6 @@ export function Overview() {
   const [listensLoading, setListensLoading] = useState(true);
   const [listenRange, setListenRange] = useState<RangeKey>("30d");
 
-  // Headline numbers — fetched once on mount.
   useEffect(() => {
     let active = true;
     fetchOverview().then((r) => {
@@ -43,7 +42,6 @@ export function Overview() {
     };
   }, []);
 
-  // Rate flags — fetched once on mount.
   useEffect(() => {
     let active = true;
     fetchRateFlags().then((r) => {
@@ -56,7 +54,6 @@ export function Overview() {
     };
   }, []);
 
-  // Signups series — refetches when the range changes.
   useEffect(() => {
     let active = true;
     setSignupsLoading(true);
@@ -71,7 +68,6 @@ export function Overview() {
     };
   }, [signupRange]);
 
-  // Listens series — refetches when the range changes.
   useEffect(() => {
     let active = true;
     setListensLoading(true);
@@ -97,9 +93,6 @@ export function Overview() {
         <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-espresso">
           Overview
         </h1>
-        <p className="mt-1 text-sm text-ink/55">
-          The numbers behind the pitch. Updated live from the Roots backend.
-        </p>
         <RootLine className="mt-4" />
       </header>
 

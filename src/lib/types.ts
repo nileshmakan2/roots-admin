@@ -15,14 +15,14 @@ export type Overview = {
   total_listens: number;
   listens_7d: number;
   signups_7d: number;
-  total_seconds_all: number;    // sum(seconds) over every root
-  total_seconds_active: number; // sum(seconds) over active roots
-  storage_bytes: number;        // bytes in the roots-audio bucket
+  total_seconds_all: number;
+  total_seconds_active: number;
+  storage_bytes: number;
 };
 
 // Returned by admin_signups_series / admin_listens_series.
 export type SeriesPoint = {
-  period: string; // ISO date, e.g. "2026-01-01"
+  period: string;
   count: number;
 };
 
@@ -32,4 +32,32 @@ export type RateFlag = {
   display_name: string | null;
   handle: string | null;
   roots_last_hour: number;
+};
+
+// Returned by admin_reports() — one row per reported root, worst-first.
+export type ReportGroup = {
+  root_id: string;
+  root_title: string | null;
+  root_status: string | null;
+  owner_id: string | null;
+  owner_display_name: string | null;
+  owner_handle: string | null;
+  report_count: number;
+  open_count: number;
+  reasons: string[] | null;
+  first_reported_at: string | null;
+  last_reported_at: string | null;
+};
+
+// Returned by admin_list_users().
+export type UserRow = {
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  handle: string | null;
+  created_at: string | null;
+  last_sign_in_at: string | null;
+  is_admin: boolean;
+  is_suspended: boolean;
+  roots_count: number;
 };

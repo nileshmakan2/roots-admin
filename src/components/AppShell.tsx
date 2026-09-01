@@ -1,56 +1,83 @@
 import { useState, type ReactNode } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import { Button } from "./ui";
-
-// Current + parked screens. Only "Overview" is live; the rest are shown as
-// "soon" so the roadmap is visible without being built.
-const NAV = [
-  { label: "Overview", live: true },
-  { label: "Moderation", live: false },
-  { label: "Campaigns", live: false },
-  { label: "Payouts", live: false },
-];
+import { NAV, type Page } from "../nav";
 
 function BrandMark() {
-  // Official Roots wordmark (transparent PNG in /public).
-  return <img src="/roots_wordmark.png" alt="Roots" className="h-8 w-auto" />;
+  // Official Roots wordmark. self-start + object-contain stop the surrounding
+  // flex column from stretching it out of proportion.
+  return (
+    <img
+      src="/roots_wordmark.png"
+      alt="Roots"
+      className="h-8 w-auto max-w-[160px] shrink-0 self-start object-contain"
+    />
+  );
 }
 
-function NavList() {
+function NavList({
+  current,
+  onNavigate,
+  onPick,
+}: {
+  current: Page;
+  onNavigate: (p: Page) => void;
+  onPick?: () => void;
+}) {
   return (
     <nav className="mt-6">
       <div className="mb-2.5 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/45">
         Console
       </div>
       <ul className="space-y-1">
-        {NAV.map((item) => (
-          <li key={item.label}>
-            <span
-              className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium ${
-                item.live ? "bg-copper text-[#FBFAF5]" : "text-ink/45"
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-current opacity-60"
-                  aria-hidden
-                />
-                {item.label}
-              </span>
-              {!item.live && (
-                <span className="rounded-full border border-ink/12 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink/40">
-                  Soon
+        {NAV.map((item) => {
+          if (!item.live) {
+            return (
+              <li key={item.key}>
+                <span className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-ink/45">
+                  <span className="flex items-center gap-2.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" aria-hidden />
+                    {item.label}
+                  </span>
+                  <span className="rounded-full border border-ink/12 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink/40">
+                    Soon
+                  </span>
                 </span>
-              )}
-            </span>
-          </li>
-        ))}
+              </li>
+            );
+          }
+          const active = item.key === current;
+          return (
+            <li key={item.key}>
+              <button
+                onClick={() => {
+                  onNavigate(item.key as Page);
+                  onPick?.();
+                }}
+                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                  active ? "bg-copper text-[#FBFAF5]" : "text-ink/70 hover:bg-surface-2"
+                }`}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" aria-hidden />
+                {item.label}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  current,
+  onNavigate,
+  children,
+}: {
+  current: Page;
+  onNavigate: (p: Page) => void;
+  children: ReactNode;
+}) {
   const { admin, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -62,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Sidebar (desktop) */}
       <aside className="hidden w-64 flex-none flex-col border-r border-ink/12 bg-surface p-5 md:flex">
         <BrandMark />
-        <NavList />
+        <NavList current={current} onNavigate={onNavigate} />
         <div className="mt-auto border-t border-ink/12 pt-4">
           <div className="truncate text-sm font-semibold text-ink" title={identity}>
             {identity}
@@ -89,7 +116,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {menuOpen && (
           <div className="border-b border-ink/12 bg-surface px-4 pb-4 md:hidden">
-            <NavList />
+            <NavList current={current} onNavigate={onNavigate} onPick={() => setMenuOpen(false)} />
             <div className="mt-4 border-t border-ink/12 pt-3">
               <div className="truncate text-sm font-semibold text-ink">{identity}</div>
               <div className="text-[11px] uppercase tracking-wide text-ink/45">{role}</div>
