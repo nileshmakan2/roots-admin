@@ -7,6 +7,7 @@ import {
   fetchListensSeries,
   fetchOverview,
   fetchRateFlags,
+  fetchRootsSeries,
   fetchSignupsSeries,
   rangeToParams,
   type RangeKey,
@@ -29,6 +30,11 @@ export function Overview() {
   const [listensErr, setListensErr] = useState<string | null>(null);
   const [listensLoading, setListensLoading] = useState(true);
   const [listenRange, setListenRange] = useState<RangeKey>("30d");
+
+  const [rootsAdded, setRootsAdded] = useState<SeriesPoint[] | null>(null);
+  const [rootsErr, setRootsErr] = useState<string | null>(null);
+  const [rootsLoading, setRootsLoading] = useState(true);
+  const [rootsRange, setRootsRange] = useState<RangeKey>("30d");
 
   useEffect(() => {
     let active = true;
@@ -82,6 +88,20 @@ export function Overview() {
     };
   }, [listenRange]);
 
+  useEffect(() => {
+    let active = true;
+    setRootsLoading(true);
+    fetchRootsSeries(rootsRange).then((r) => {
+      if (!active) return;
+      setRootsAdded(r.data);
+      setRootsErr(r.error);
+      setRootsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [rootsRange]);
+
   return (
     <div>
       <FlagStrip flags={flags} loading={flagsLoading} />
@@ -107,47 +127,13 @@ export function Overview() {
               : undefined
           }
         />
-        <KpiCard
-          label="Storytellers"
-          value={overview?.total_storytellers ?? null}
-          loading={overviewLoading}
-        />
-        <KpiCard
-          label="Roots"
-          value={overview?.total_roots ?? null}
-          loading={overviewLoading}
-        />
-        <KpiCard
-          label="Total listens"
-          value={overview?.total_listens ?? null}
-          loading={overviewLoading}
-          accent="lime"
-        />
-        <KpiCard
-          label="Listens this week"
-          value={overview?.listens_7d ?? null}
-          loading={overviewLoading}
-          accent="lime"
-        />
-        <KpiCard
-          label="Hours of roots (all)"
-          value={overview?.total_seconds_all ?? null}
-          loading={overviewLoading}
-          kind="hours"
-        />
-        <KpiCard
-          label="Hours of roots (active)"
-          value={overview?.total_seconds_active ?? null}
-          loading={overviewLoading}
-          kind="hours"
-        />
-        <KpiCard
-          label="Storage used"
-          value={overview?.storage_bytes ?? null}
-          loading={overviewLoading}
-          kind="bytes"
-          accent="lime"
-        />
+        <KpiCard label="Storytellers" value={overview?.total_storytellers ?? null} loading={overviewLoading} />
+        <KpiCard label="Roots" value={overview?.total_roots ?? null} loading={overviewLoading} />
+        <KpiCard label="Total listens" value={overview?.total_listens ?? null} loading={overviewLoading} accent="lime" />
+        <KpiCard label="Listens this week" value={overview?.listens_7d ?? null} loading={overviewLoading} accent="lime" />
+        <KpiCard label="Hours of roots (all)" value={overview?.total_seconds_all ?? null} loading={overviewLoading} kind="hours" />
+        <KpiCard label="Hours of roots (active)" value={overview?.total_seconds_active ?? null} loading={overviewLoading} kind="hours" />
+        <KpiCard label="Storage used" value={overview?.storage_bytes ?? null} loading={overviewLoading} kind="bytes" accent="lime" />
       </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -171,6 +157,18 @@ export function Overview() {
           bucket={rangeToParams(listenRange).bucket}
           onRangeChange={setListenRange}
         />
+        <div className="xl:col-span-2">
+          <TrendPanel
+            title="Roots added over time"
+            color="#0E7C86"
+            data={rootsAdded}
+            loading={rootsLoading}
+            error={rootsErr}
+            range={rootsRange}
+            bucket={rangeToParams(rootsRange).bucket}
+            onRangeChange={setRootsRange}
+          />
+        </div>
       </section>
     </div>
   );

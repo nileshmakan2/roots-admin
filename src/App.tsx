@@ -8,6 +8,7 @@ import { Overview } from "./pages/Overview";
 import { Moderation } from "./pages/Moderation";
 import { Users } from "./pages/Users";
 import { Legal } from "./pages/Legal";
+import { MapView } from "./pages/MapView";
 import type { Page } from "./nav";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
   return (
     <AppShell current={page} onNavigate={setPage}>
       {page === "overview" && <Overview />}
+      {page === "map" && <MapView />}
       {page === "moderation" && <Moderation />}
       {page === "users" && <Users />}
       {page === "legal" && <Legal />}

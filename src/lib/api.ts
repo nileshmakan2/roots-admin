@@ -1,5 +1,14 @@
 import { supabase } from "./supabase";
-import type { Overview, SeriesPoint, RateFlag, ReportGroup, UserRow } from "./types";
+import type {
+  Overview,
+  SeriesPoint,
+  RateFlag,
+  ReportGroup,
+  UserRow,
+  MapRoot,
+  MapRoute,
+  PinMoveResult,
+} from "./types";
 
 export type Result<T> = { data: T | null; error: string | null };
 
@@ -83,6 +92,10 @@ export function fetchListensSeries(range: RangeKey) {
   return fetchSeries("admin_listens_series", range);
 }
 
+export function fetchRootsSeries(range: RangeKey) {
+  return fetchSeries("admin_roots_series", range);
+}
+
 export async function fetchRateFlags(): Promise<Result<RateFlag[]>> {
   const { data, error } = await supabase.rpc("admin_rate_flags");
   return { data: (data as RateFlag[]) ?? null, error: toMessage(error) };
@@ -122,10 +135,6 @@ export async function moderateRoot(
   return { data: true, error: null };
 }
 
-// Signed, short-lived URL to play a reported root's audio. Fetched on demand.
-// NOTE: the roots-audio bucket is currently public, so this is an admin
-// convenience today, not a privacy boundary. It becomes a real boundary once
-// the bucket moves to private (R2 migration) with no change here.
 export async function fetchRootAudioUrl(rootId: string): Promise<Result<string>> {
   const { data, error } = await supabase.functions.invoke("admin_root_audio_url", {
     body: { root_id: rootId },
@@ -211,4 +220,42 @@ export async function setUserStatus(
     return { data: null, error: error.message ?? "The action failed. Try again." };
   }
   return { data: true, error: null };
+}
+
+// ---- Map ------------------------------------------------------------------
+
+export async function fetchMapRoots(search: string | null = null): Promise<Result<MapRoot[]>> {
+  const { data, error } = await supabase.rpc("admin_map_roots", {
+    search: search && search.trim() ? search.trim() : null,
+  });
+  return { data: (data as MapRoot[]) ?? null, error: toMessage(error) };
+}
+
+export async function fetchMapRoutes(): Promise<Result<MapRoute[]>> {
+  const { data, error } = await supabase.rpc("admin_map_routes");
+  return { data: (data as MapRoute[]) ?? null, error: toMessage(error) };
+}
+
+// Move a Heritage-owned root's pin. Refuses (403) for other owners, enforced
+// server-side. Returns old + new coordinates to confirm the change.
+export async function movePin(
+  rootId: string,
+  lat: number,
+  lng: number,
+  location?: string
+): Promise<Result<PinMoveResult>> {
+  const body: Record<string, unknown> = { root_id: rootId, lat, lng };
+  if (location !== undefined) body.location = location;
+  const { data, error } = await supabase.functions.invoke("admin_move_root_pin", { body });
+  if (error) {
+    const status = invokeStatus(error);
+    if (status === 403) {
+      return { data: null, error: "Pin editing is limited to owned (Heritage) accounts." };
+    }
+    if (status === 401) {
+      return { data: null, error: "You're not signed in as an admin, or your session expired." };
+    }
+    return { data: null, error: error.message ?? "Couldn't move the pin. Try again." };
+  }
+  return { data: (data as PinMoveResult) ?? null, error: null };
 }

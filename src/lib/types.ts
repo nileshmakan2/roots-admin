@@ -3,11 +3,10 @@
 
 export type AdminRow = {
   user_id: string;
-  role: string | null; // e.g. "owner" | "staff"
+  role: string | null;
   email: string | null;
 };
 
-// Returned by admin_overview() — a single row of headline numbers.
 export type Overview = {
   total_users: number;
   total_storytellers: number;
@@ -20,13 +19,11 @@ export type Overview = {
   storage_bytes: number;
 };
 
-// Returned by admin_signups_series / admin_listens_series.
 export type SeriesPoint = {
   period: string;
   count: number;
 };
 
-// Returned by admin_rate_flags() — users who created > 20 roots in the last hour.
 export type RateFlag = {
   owner_id: string;
   display_name: string | null;
@@ -34,7 +31,6 @@ export type RateFlag = {
   roots_last_hour: number;
 };
 
-// Returned by admin_reports() — one row per reported root, worst-first.
 export type ReportGroup = {
   root_id: string;
   root_title: string | null;
@@ -49,7 +45,6 @@ export type ReportGroup = {
   last_reported_at: string | null;
 };
 
-// Returned by admin_list_users().
 export type UserRow = {
   user_id: string;
   email: string | null;
@@ -60,4 +55,42 @@ export type UserRow = {
   is_admin: boolean;
   is_suspended: boolean;
   roots_count: number;
+};
+
+// admin_map_roots(search)
+export type MapRoot = {
+  root_id: string;
+  title: string | null;
+  owner_id: string | null;
+  owner_handle: string | null;
+  owner_display_name: string | null;
+  owner_email: string | null;
+  lat: number;
+  lng: number;
+  status: string | null;
+  visibility: string | null;
+};
+
+export type RouteStop = {
+  name?: string | null;
+  lat?: number | string | null;
+  lng?: number | string | null;
+  audio?: string | null;
+};
+
+export type MapRoute = {
+  route_id: string;
+  name: string | null;
+  owner_id: string | null;
+  owner_handle: string | null;
+  visibility: string | null;
+  stops: RouteStop[] | null;
+};
+
+// Response from admin_move_root_pin.
+export type PinMoveResult = {
+  ok: boolean;
+  old: { lat: number; lng: number };
+  new: { lat: number; lng: number };
+  audit_warning?: string;
 };
