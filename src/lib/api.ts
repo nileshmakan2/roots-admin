@@ -118,10 +118,7 @@ const ACTION_FN: Record<ModerationAction, string> = {
   dismiss: "moderate_dismiss_reports",
 };
 
-export async function moderateRoot(
-  action: ModerationAction,
-  rootId: string
-): Promise<Result<true>> {
+export async function moderateRoot(action: ModerationAction, rootId: string): Promise<Result<true>> {
   const { error } = await supabase.functions.invoke(ACTION_FN[action], {
     body: { root_id: rootId },
   });
@@ -153,11 +150,7 @@ export async function fetchRootAudioUrl(rootId: string): Promise<Result<string>>
 
 // ---- User management ------------------------------------------------------
 
-export async function fetchUsers(
-  search: string | null,
-  limit = 50,
-  offset = 0
-): Promise<Result<UserRow[]>> {
+export async function fetchUsers(search: string | null, limit = 50, offset = 0): Promise<Result<UserRow[]>> {
   const { data, error } = await supabase.rpc("admin_list_users", {
     search: search && search.trim() ? search.trim() : null,
     limit_n: limit,
@@ -175,26 +168,20 @@ export async function fetchUsersCount(search: string | null): Promise<Result<num
 }
 
 export async function inviteUser(email: string): Promise<Result<{ user_id: string }>> {
-  const { data, error } = await supabase.functions.invoke("admin_invite_user", {
-    body: { email: email.trim() },
-  });
+  const { data, error } = await supabase.functions.invoke("admin_invite_user", { body: { email: email.trim() } });
   if (error) {
     const status = invokeStatus(error);
     if (status === 401 || status === 403) {
       return { data: null, error: "You're not signed in as an admin, or your session expired." };
     }
-    if (status === 409) {
-      return { data: null, error: "An account with that email already exists." };
-    }
+    if (status === 409) return { data: null, error: "An account with that email already exists." };
     return { data: null, error: error.message ?? "Couldn't send the invite. Try again." };
   }
   return { data: (data as { user_id: string }) ?? null, error: null };
 }
 
 export async function sendPasswordReset(userId: string): Promise<Result<true>> {
-  const { error } = await supabase.functions.invoke("admin_send_password_reset", {
-    body: { user_id: userId },
-  });
+  const { error } = await supabase.functions.invoke("admin_send_password_reset", { body: { user_id: userId } });
   if (error) {
     const status = invokeStatus(error);
     if (status === 401 || status === 403) {
@@ -205,13 +192,8 @@ export async function sendPasswordReset(userId: string): Promise<Result<true>> {
   return { data: true, error: null };
 }
 
-export async function setUserStatus(
-  userId: string,
-  action: "suspend" | "reactivate"
-): Promise<Result<true>> {
-  const { error } = await supabase.functions.invoke("admin_set_user_status", {
-    body: { user_id: userId, action },
-  });
+export async function setUserStatus(userId: string, action: "suspend" | "reactivate"): Promise<Result<true>> {
+  const { error } = await supabase.functions.invoke("admin_set_user_status", { body: { user_id: userId, action } });
   if (error) {
     const status = invokeStatus(error);
     if (status === 401 || status === 403) {
@@ -236,8 +218,7 @@ export async function fetchMapRoutes(): Promise<Result<MapRoute[]>> {
   return { data: (data as MapRoute[]) ?? null, error: toMessage(error) };
 }
 
-// Move a Heritage-owned root's pin. Refuses (403) for other owners, enforced
-// server-side. Returns old + new coordinates to confirm the change.
+// Move a Heritage-owned root's pin. 403 for other owners (server-enforced).
 export async function movePin(
   rootId: string,
   lat: number,
@@ -249,13 +230,25 @@ export async function movePin(
   const { data, error } = await supabase.functions.invoke("admin_move_root_pin", { body });
   if (error) {
     const status = invokeStatus(error);
-    if (status === 403) {
-      return { data: null, error: "Pin editing is limited to owned (Heritage) accounts." };
-    }
-    if (status === 401) {
-      return { data: null, error: "You're not signed in as an admin, or your session expired." };
-    }
+    if (status === 403) return { data: null, error: "Pin editing is limited to owned (Heritage) accounts." };
+    if (status === 401) return { data: null, error: "You're not signed in as an admin, or your session expired." };
     return { data: null, error: error.message ?? "Couldn't move the pin. Try again." };
   }
   return { data: (data as PinMoveResult) ?? null, error: null };
+}
+
+// Rename a Heritage-owned root's title. 403 for non-Heritage or non-admins.
+export async function updateRootTitle(rootId: string, title: string): Promise<Result<{ title: string }>> {
+  const { data, error } = await supabase.functions.invoke("admin_update_root", {
+    body: { root_id: rootId, title },
+  });
+  if (error) {
+    const status = invokeStatus(error);
+    if (status === 401) return { data: null, error: "You're not signed in as an admin, or your session expired." };
+    if (status === 403) return { data: null, error: "Editing is limited to Heritage-owned roots." };
+    if (status === 404) return { data: null, error: "That root no longer exists." };
+    if (status === 400) return { data: null, error: "Title must be between 1 and 200 characters." };
+    return { data: null, error: error.message ?? "Couldn't save the name. Try again." };
+  }
+  return { data: (data as { title: string }) ?? null, error: null };
 }
