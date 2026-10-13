@@ -5,6 +5,9 @@ import type {
   RateFlag,
   ReportGroup,
   UserRow,
+  UserDetail,
+  UserRootRow,
+  UserRouteRow,
   MapRoot,
   MapRoute,
   PinMoveResult,
@@ -167,6 +170,23 @@ export async function fetchUsersCount(search: string | null): Promise<Result<num
   return { data: error ? null : n, error: toMessage(error) };
 }
 
+// Per-user detail for the Users drawer. All three degrade to a friendly
+// "not available yet" until the backend functions exist.
+export async function fetchUserDetail(userId: string): Promise<Result<UserDetail>> {
+  const { data, error } = await supabase.rpc("admin_user_detail", { p_user_id: userId }).maybeSingle();
+  return { data: (data as UserDetail) ?? null, error: toMessage(error) };
+}
+
+export async function fetchUserRoots(userId: string): Promise<Result<UserRootRow[]>> {
+  const { data, error } = await supabase.rpc("admin_user_roots", { p_user_id: userId });
+  return { data: (data as UserRootRow[]) ?? null, error: toMessage(error) };
+}
+
+export async function fetchUserRoutes(userId: string): Promise<Result<UserRouteRow[]>> {
+  const { data, error } = await supabase.rpc("admin_user_routes", { p_user_id: userId });
+  return { data: (data as UserRouteRow[]) ?? null, error: toMessage(error) };
+}
+
 export async function inviteUser(email: string): Promise<Result<{ user_id: string }>> {
   const { data, error } = await supabase.functions.invoke("admin_invite_user", { body: { email: email.trim() } });
   if (error) {
@@ -218,7 +238,6 @@ export async function fetchMapRoutes(): Promise<Result<MapRoute[]>> {
   return { data: (data as MapRoute[]) ?? null, error: toMessage(error) };
 }
 
-// Move a Heritage-owned root's pin. 403 for other owners (server-enforced).
 export async function movePin(
   rootId: string,
   lat: number,
@@ -237,7 +256,6 @@ export async function movePin(
   return { data: (data as PinMoveResult) ?? null, error: null };
 }
 
-// Rename a Heritage-owned root's title. 403 for non-Heritage or non-admins.
 export async function updateRootTitle(rootId: string, title: string): Promise<Result<{ title: string }>> {
   const { data, error } = await supabase.functions.invoke("admin_update_root", {
     body: { root_id: rootId, title },

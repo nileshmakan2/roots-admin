@@ -19,10 +19,7 @@ export type Overview = {
   storage_bytes: number;
 };
 
-export type SeriesPoint = {
-  period: string;
-  count: number;
-};
+export type SeriesPoint = { period: string; count: number };
 
 export type RateFlag = {
   owner_id: string;
@@ -45,6 +42,7 @@ export type ReportGroup = {
   last_reported_at: string | null;
 };
 
+// admin_list_users()
 export type UserRow = {
   user_id: string;
   email: string | null;
@@ -55,9 +53,60 @@ export type UserRow = {
   is_admin: boolean;
   is_suspended: boolean;
   roots_count: number;
+  avatar_url?: string | null; // profiles key in the public "avatars" bucket
 };
 
-// admin_map_roots(search)
+// admin_user_detail(p_user_id): one row
+export type UserDetail = {
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  handle: string | null;
+  about: string | null;
+  avatar_url: string | null;
+  is_private: boolean | null;
+  created_at: string | null;
+  last_sign_in_at: string | null;
+  is_admin: boolean;
+  admin_role: string | null;
+  is_suspended: boolean;
+  roots_total: number;
+  roots_active: number;
+  roots_hidden: number;
+  routes_total: number;
+  total_seconds: number;
+  plays_received: number;
+  followers_count: number;
+  following_count: number;
+  reports_against_open: number;
+  reports_against_total: number;
+  roots_flagged: number;
+  reports_filed: number;
+  roots_last_hour: number;
+};
+
+// admin_user_roots(p_user_id): rows
+export type UserRootRow = {
+  root_id: string;
+  title: string | null;
+  status: string | null;
+  visibility: string | null;
+  seconds: number | null;
+  created_at: string | null;
+  plays: number;
+  open_reports: number;
+  total_reports: number;
+};
+
+// admin_user_routes(p_user_id): rows
+export type UserRouteRow = {
+  route_id: string;
+  name: string | null;
+  visibility: string | null;
+  stops_count: number;
+  created_at: string | null;
+};
+
 export type MapRoot = {
   root_id: string;
   title: string | null;
@@ -87,7 +136,6 @@ export type MapRoute = {
   stops: RouteStop[] | null;
 };
 
-// Response from admin_move_root_pin.
 export type PinMoveResult = {
   ok: boolean;
   old: { lat: number; lng: number };
